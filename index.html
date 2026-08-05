@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quiz de Práctica DOP 11-26</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --rosa-fondo1: #FFE3EF;
+    --rosa-fondo2: #FFD1E3;
+    --rosa-fuerte: #FF5FA2;
+    --rosa-medio: #FF8FC4;
+    --rosa-suave: #FFD6E8;
+    --morado-uva: #C86FC9;
+    --blanco-crema: #FFF8FB;
+    --texto-oscuro: #7A2E55;
+    --exito: #7ED6A5;
+    --error: #FF7A9C;
+    --sombra: rgba(255, 95, 162, 0.25);
+  }
+
+  *{ box-sizing: border-box; }
+
+  body{
+    margin:0;
+    min-height:100vh;
+    font-family:'Quicksand', sans-serif;
+    color: var(--texto-oscuro);
+    background: linear-gradient(160deg, var(--rosa-fondo1) 0%, var(--rosa-fondo2) 55%, #FFC9E0 100%);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding: 24px;
+    position:relative;
+    overflow-x:hidden;
+  }
+
+  .app{
+    position:relative;
+    z-index:1;
+    width:100%;
+    max-width: 560px;
+  }
+
+  .marca{
+    text-align:center;
+    font-family:'Baloo 2', sans-serif;
+    font-weight:800;
+    font-size: 26px;
+    color: var(--rosa-fuerte);
+    margin-bottom: 14px;
+    letter-spacing: 0.5px;
+    text-shadow: 0 2px 0 #fff;
+  }
+  .marca span{ color: var(--morado-uva); }
+
+  .tarjeta{
+    background: var(--blanco-crema);
+    border-radius: 32px;
+    padding: 32px 28px 28px;
+    box-shadow: 0 20px 45px var(--sombra), 0 2px 0 #fff inset;
+    border: 3px solid #fff;
+    position: relative;
+    overflow:hidden;
+  }
+
+  .tarjeta::before{
+    content:"";
+    position:absolute;
+    top:-60px; right:-60px;
+    width:160px; height:160px;
+    background: var(--rosa-suave);
+    border-radius:50%;
+    opacity:0.6;
+  }
+
+  .progreso{
+    display:flex;
+    justify-content:center;
+    flex-wrap: wrap; 
+    gap:4px;
+    margin-bottom: 22px;
+    position:relative;
+  }
+  .progreso .punto{
+    width:8px; height:8px;
+    border-radius:50%;
+    background: var(--rosa-suave);
+    transition: all .3s ease;
+  }
+  .progreso .punto.activo{
+    background: var(--rosa-fuerte);
+    transform: scale(1.3);
+  }
+  .progreso .punto.hecho{
+    background: var(--morado-uva);
+  }
+
+  .contador{
+    text-align:center;
+    font-size: 14px;
+    font-weight:700;
+    color: var(--morado-uva);
+    margin-bottom: 6px;
+    position:relative;
+  }
+
+  .pregunta{
+    font-family:'Baloo 2', sans-serif;
+    font-size: 21px;
+    font-weight: 700;
+    line-height: 1.4;
+    text-align:center;
+    margin: 6px 0 26px;
+    color: var(--texto-oscuro);
+    position:relative;
+  }
+
+  .opciones{
+    display:flex;
+    flex-direction:column;
+    gap: 12px;
+    position:relative;
+  }
+
+  .opcion{
+    display:flex;
+    align-items:center;
+    gap: 12px;
+    background: #fff;
+    border: 2.5px solid var(--rosa-suave);
+    border-radius: 18px;
+    padding: 14px 16px;
+    font-family:'Quicksand', sans-serif;
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--texto-oscuro);
+    cursor:pointer;
+    text-align:left;
+    transition: transform .15s ease, border-color .15s ease, background .15s ease;
+  }
+  .opcion .letra{
+    flex:0 0 auto;
+    width: 30px; height: 30px;
+    border-radius:50%;
+    background: var(--rosa-suave);
+    color: var(--rosa-fuerte);
+    display:flex; align-items:center; justify-content:center;
+    font-family:'Baloo 2', sans-serif;
+    font-weight:700;
+    font-size: 14px;
+    transition: all .15s ease;
+  }
+
+  .opcion:hover:not(.bloqueada){
+    transform: translateY(-2px) scale(1.01);
+    border-color: var(--rosa-medio);
+    background: #FFF5FA;
+  }
+
+  .opcion.seleccionada{
+    border-color: var(--rosa-fuerte);
+    background: #FFEAF4;
+  }
+
+  .opcion.correcta{
+    border-color: var(--exito);
+    background: #EAFBF2;
+  }
+  .opcion.correcta .letra{ background: var(--exito); color:#fff; }
+
+  .opcion.incorrecta{
+    border-color: var(--error);
+    background: #FFEEF2;
+  }
+  .opcion.incorrecta .letra{ background: var(--error); color:#fff; }
+
+  .opcion.bloqueada{ cursor:default; }
+
+  .mensaje{
+    min-height: 26px;
+    text-align:center;
+    font-weight:700;
+    font-family:'Baloo 2', sans-serif;
+    font-size:15px;
+    margin-top: 16px;
+    transition: opacity .2s ease;
+  }
+  .mensaje.ok{ color: #3FAE7C; }
+  .mensaje.no{ color: var(--error); }
+
+  .acciones{
+    display:flex;
+    justify-content:center;
+    margin-top: 20px;
+    position:relative;
+  }
+
+  .btn-siguiente{
+    background: linear-gradient(135deg, var(--rosa-fuerte), var(--morado-uva));
+    color:#fff;
+    border:none;
+    padding: 13px 34px;
+    border-radius: 999px;
+    font-family:'Baloo 2', sans-serif;
+    font-weight:700;
+    font-size: 16px;
+    cursor:pointer;
+    box-shadow: 0 10px 20px var(--sombra);
+    opacity:0;
+    transform: translateY(8px);
+    pointer-events:none;
+    transition: all .25s ease;
+  }
+  .btn-siguiente.mostrar{
+    opacity:1;
+    transform: translateY(0);
+    pointer-events:auto;
+  }
+  .btn-siguiente:hover{ filter: brightness(1.06); transform: translateY(-2px); }
+  .btn-siguiente:active{ transform: translateY(0); }
+
+  /* pantalla final */
+  .final{
+    text-align:center;
+    display:none;
+    position:relative;
+  }
+  .final.mostrar{ display:block; }
+  .final h2{
+    font-family:'Baloo 2', sans-serif;
+    color: var(--rosa-fuerte);
+    font-size: 24px;
+    margin: 6px 0;
+  }
+  .final p{ font-size:16px; font-weight:600; }
+  .final .puntaje{
+    font-family:'Baloo 2', sans-serif;
+    font-size: 42px;
+    color: var(--morado-uva);
+    margin: 10px 0;
+  }
+  .btn-reiniciar{
+    margin-top: 16px;
+    background: #fff;
+    border: 2.5px solid var(--rosa-fuerte);
+    color: var(--rosa-fuerte);
+    padding: 11px 28px;
+    border-radius: 999px;
+    font-family:'Baloo 2', sans-serif;
+    font-weight:700;
+    cursor:pointer;
+    transition: all .2s ease;
+  }
+  .btn-reiniciar:hover{ background: var(--rosa-fuerte); color:#fff; }
+
+  @media (max-width: 420px){
+    .tarjeta{ padding: 26px 18px 22px; border-radius: 24px; }
+    .pregunta{ font-size: 18px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <div class="marca">Quiz <span>DOP 11-26</span></div>
+
+  <div class="tarjeta">
+    <!-- vista de pregunta -->
+    <div id="vistaPregunta">
+      <div class="progreso" id="progreso"></div>
+      <div class="contador" id="contador"></div>
+      <div class="pregunta" id="textoPregunta"></div>
+      <div class="opciones" id="opciones"></div>
+      <div class="mensaje" id="mensaje"></div>
+      <div class="acciones">
+        <button class="btn-siguiente" id="btnSiguiente">Siguiente</button>
+      </div>
+    </div>
+
+    <!-- vista final -->
+    <div class="final" id="vistaFinal">
+      <h2 id="tituloFinal">¡Cuestionario completado!</h2>
+      <p>Tu puntaje fue:</p>
+      <div class="puntaje" id="puntajeFinal">0/0</div>
+      <p id="mensajeFinal"></p>
+      <button class="btn-reiniciar" id="btnReiniciar">Volver a intentar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Banco Maestro de 100 Preguntas
+  const preguntasMaestras = [
+    { pregunta: "Según la DOP 11-26, ¿cuál es el objeto de la Doctrina Operacional de Protección de la Fuerza?", opciones: ["Describir las tácticas del enemigo.", "Establecer la Doctrina Operacional de la Protección de la Fuerza.", "Sancionar las infracciones de seguridad.", "Regular los sistemas de información militar."], correcta: 1 },
+    { pregunta: "¿Cuál es la finalidad de la Doctrina Operacional de Protección de la Fuerza?", opciones: ["Definir las reglas de combate aéreas.", "Proporcionar los principios fundamentales que unifiquen el pensamiento y acción para la protección de la fuerza.", "Administrar los recursos económicos de la FAP.", "Establecer el reglamento interno de las bases."], correcta: 1 },
+    { pregunta: "Según el alcance de la Doctrina, su contenido es:", opciones: ["Autoritativo, pero no restrictivo.", "Estrictamente obligatorio y restrictivo.", "Únicamente referencial para oficiales.", "Opcional para el personal de tropa."], correcta: 0 },
+    { pregunta: "¿Cuál es la principal tarea de la Protección de la Fuerza (FP) para la FAP?", opciones: ["La protección del presupuesto institucional.", "La protección de su personal, siendo este el principal activo.", "La protección de los aviones de combate.", "La protección del ciberespacio."], correcta: 1 },
+    { pregunta: "La protección contra las amenazas aéreas hostiles se logra mediante:", opciones: ["La gestión de emergencias.", "La defensa aérea activa y pasiva.", "El uso defensivo de guerra electrónica.", "La defensa CBRNE."], correcta: 1 },
+    { pregunta: "Las medidas que buscan anticiparse a las intenciones del adversario anulando su libertad de acción son:", opciones: ["Medidas pasivas.", "Medidas activas.", "Medidas de inteligencia.", "Medidas restrictivas."], correcta: 1 },
+    { pregunta: "Las medidas que pretenden minimizar los efectos de las amenazas sobre los medios para aumentar su grado de supervivencia son:", opciones: ["Medidas activas.", "Medidas pasivas.", "Medidas de control.", "Medidas operativas."], correcta: 1 },
+    { pregunta: "Efecto de la FP que busca 'desalentar las acciones adversarias' mediante la posesión de fuerzas organizadas y adiestradas:", opciones: ["Disuadir.", "Detectar.", "Retrasar.", "Negar."], correcta: 0 },
+    { pregunta: "Efecto de la FP que identifica la presencia de un objeto o suceso de posible interés militar:", opciones: ["Negar.", "Detectar.", "Derrotar.", "Disuadir."], correcta: 1 },
+    { pregunta: "Efecto de la FP que utiliza el terreno, barreras y obstáculos para dar tiempo a que la base aérea tome medidas defensivas:", opciones: ["Derrotar.", "Negar.", "Retrasar.", "Disuadir."], correcta: 2 },
+    { pregunta: "Efecto de la FP que significa impedir el posicionamiento del adversario para causar efectos sobre las fuerzas:", opciones: ["Detectar.", "Retrasar.", "Negar.", "Derrotar."], correcta: 2 },
+    { pregunta: "Efecto de la FP que es clave para mantener la iniciativa y recuperar la ofensiva antes de que el adversario cause daños significativos:", opciones: ["Disuadir.", "Detectar.", "Retrasar.", "Derrotar."], correcta: 3 },
+    { pregunta: "Principio de la FP que equilibra la necesidad de preservar la capacidad operativa con el más alto grado de protección:", opciones: ["Priorización.", "Flexibilidad.", "Interoperabilidad.", "Coordinación."], correcta: 0 },
+    { pregunta: "Principio de la FP que requiere la identificación e información de inteligencia para no ser sorprendidos:", opciones: ["Priorización.", "Análisis del riesgo.", "Valoración de Amenazas.", "Coordinación."], correcta: 2 },
+    { pregunta: "Principio de la FP que establece que la protección debe basarse en la gestión y ponderación, y no en la eliminación total de las amenazas:", opciones: ["Interoperabilidad.", "Análisis y Gestión del Riesgo.", "Flexibilidad.", "Valoración de Amenazas."], correcta: 1 },
+    { pregunta: "Principio que permite que el Comandante adopte medidas oportunas divulgando la información entre niveles:", opciones: ["Coordinación.", "Priorización.", "Interoperabilidad.", "Flexibilidad."], correcta: 0 },
+    { pregunta: "Principio de la FP necesario para operar de manera conjunta o combinada con otras organizaciones militares y civiles:", opciones: ["Flexibilidad.", "Interoperabilidad.", "Análisis de Riesgo.", "Coordinación."], correcta: 1 },
+    { pregunta: "Principio que indica que el éxito de la misión depende del equilibrio entre la protección de la fuerza y la libertad de acción del Comandante:", opciones: ["Priorización.", "Flexibilidad.", "Coordinación.", "Valoración de Amenazas."], correcta: 1 },
+    { pregunta: "Área de la Protección en la Seguridad que comprueba la fiabilidad, honradez y lealtad del personal:", opciones: ["Seguridad Física.", "Seguridad de la Información.", "Seguridad de la Organización.", "Seguridad en el Personal."], correcta: 3 },
+    { pregunta: "Área de la Protección en la Seguridad que incluye salvaguardar confidencialidad, integridad y disponibilidad, y la ciberdefensa:", opciones: ["Seguridad Física.", "Seguridad de la Información.", "Seguridad en el Personal.", "Seguridad de las Operaciones."], correcta: 1 },
+    { pregunta: "Área funcional desarrollada para proteger infraestructuras e impedir el acceso no autorizado mediante defensas pasivas y medios técnicos:", opciones: ["Seguridad Física.", "Seguridad de las Operaciones.", "Seguridad de la Organización.", "Seguridad de la Información."], correcta: 0 },
+    { pregunta: "Medidas destinadas a proteger los Elementos Esenciales de Información Propia (EEI) contra la obtención por el adversario:", opciones: ["Seguridad Física.", "Seguridad de la Organización.", "Seguridad de las Operaciones (OPSEC).", "Seguridad Funcional."], correcta: 2 },
+    { pregunta: "Área que previene que el personal militar se vea involucrado en asuntos contra el buen nombre y reputación de la Fuerza Aérea:", opciones: ["Seguridad Física.", "Seguridad de la Organización.", "Seguridad de la Información.", "Protección Funcional."], correcta: 1 },
+    { pregunta: "Área de aplicación que tiene como objeto disuadir o anular tácticas hostiles de forma asimétrica (amenaza híbrida):", opciones: ["Defensa NBC.", "Protección Sanitaria.", "Protección Funcional.", "Protección Contra la Amenaza No Convencional."], correcta: 3 },
+    { pregunta: "Área que engloba medicina preventiva, salud mental, seguridad de agua y alimentos:", opciones: ["Defensa NBC.", "Protección Sanitaria.", "Protección Funcional.", "Protección en la Seguridad."], correcta: 1 },
+    { pregunta: "Área funcional referida al nivel de despliegue de protección ante agentes químicos o biológicos:", opciones: ["Defensa NBC.", "Protección Funcional.", "Protección Sanitaria.", "Amenaza no convencional."], correcta: 0 },
+    { pregunta: "Área orientada a garantizar un entorno de trabajo seguro y saludable, como seguridad vial y prevención contra incendios:", opciones: ["Protección Sanitaria.", "Protección Funcional.", "Seguridad Física.", "Seguridad de la Organización."], correcta: 1 },
+    { pregunta: "Nivel de comando responsable de orientar la organización, asignar fondos y establecer políticas de protección institucional:", opciones: ["Comandancia General (CG-FAP).", "Comando de Operaciones.", "Alas Aéreas.", "JFAC."], correcta: 0 },
+    { pregunta: "Nivel responsable de organizar, entrenar y equipar fuerzas, autorizando la coordinación funcional:", opciones: ["JFAC.", "Comandancia General.", "Comando de Operaciones.", "Unidades."], correcta: 2 },
+    { pregunta: "Nivel que debe dar impulso a los requerimientos de protección presentándolos al Comando de Operaciones:", opciones: ["CAOC.", "Las Unidades.", "CG-FAP.", "JFAC."], correcta: 1 },
+    { pregunta: "Ejerce funciones como Comandante del Componente Aéreo de la Fuerza Conjunta:", opciones: ["Un Técnico Inspector.", "Un Oficial General (JFACC).", "El Presidente de la República.", "El Jefe de Estado Mayor."], correcta: 1 },
+    { pregunta: "Centro desde donde se planea y ejecuta la realización de operaciones diarias y operaciones de FP dentro de la estructura conjunta:", opciones: ["CAOC.", "BSZ.", "AOR.", "CIFP."], correcta: 0 },
+    { pregunta: "En tiempo de paz, tienen la responsabilidad de proteger a las unidades bajo su mando en su área de responsabilidad:", opciones: ["Comando Conjunto.", "Alas Aéreas.", "CAOC.", "JFAC."], correcta: 1 },
+    { pregunta: "Amenaza conformada por fuerzas militares regulares apoyadas por un gobierno reconocido:", opciones: ["Irregular.", "Terrorista.", "Convencional.", "Interna."], correcta: 2 },
+    { pregunta: "Amenaza que incluye operaciones paramilitares, guerra de guerrillas, subversión y sabotaje con apoyo externo:", opciones: ["Convencional.", "Irregular.", "Criminal.", "Psicológica."], correcta: 1 },
+    { pregunta: "Amenaza que utiliza la violencia calculada para infundir miedo y coaccionar a sociedades o gobiernos:", opciones: ["Criminal.", "Interna.", "Terrorista.", "Irregular."], correcta: 2 },
+    { pregunta: "El robo de vehículos, pasaportes o pases de entrada son indicadores que corresponden a la amenaza:", opciones: ["Terrorista.", "Interna.", "Delictiva / Criminal.", "Disturbios civiles."], correcta: 2 },
+    { pregunta: "Amenaza que procede de personal civil o militar nacional (empleados contratados) que pueden revelar información sensible:", opciones: ["Convencional.", "Psicológica.", "Interna.", "Irregular."], correcta: 2 },
+    { pregunta: "Amenaza que utiliza el engaño y propaganda para socavar el apoyo y debilitar peligrosamente la moral militar:", opciones: ["Psicológica.", "A la información.", "Disturbios civiles.", "CBRNE."], correcta: 0 },
+    { pregunta: "Amenaza que se caracteriza por diversos grados de letalidad y persistencia, originada por accidentes industriales o actos terroristas:", opciones: ["Psicológica.", "CBRNE.", "Interna.", "Criminal."], correcta: 1 },
+    { pregunta: "Amenaza manifestada por la violencia de la población durante protestas o tensiones locales:", opciones: ["Irregular.", "Terrorista.", "Disturbios civiles.", "Interna."], correcta: 2 },
+    { pregunta: "Amenaza por los intentos de afectar redes informáticas e interferir con infraestructuras críticas:", opciones: ["A la información / datos.", "Psicológica.", "Interna.", "Convencional."], correcta: 0 },
+    { pregunta: "Las amenazas que incluyen agentes enemigos, terroristas y secuestros se clasifican en:", opciones: ["Nivel I.", "Nivel II.", "Nivel III.", "Nivel IV."], correcta: 0 },
+    { pregunta: "El uso de artefactos explosivos improvisados (IED) y civiles simpatizantes es característico de las amenazas de:", opciones: ["Nivel III.", "Nivel II.", "Nivel I.", "Nivel Delta."], correcta: 2 },
+    { pregunta: "Nivel de amenaza que incluye pequeñas fuerzas que llevan a cabo guerra irregular, incursiones y emboscadas:", opciones: ["Nivel I.", "Nivel II.", "Nivel III.", "Nivel Charlie."], correcta: 1 },
+    { pregunta: "Las fuerzas de operaciones especiales altamente entrenadas en redes de espionaje pertenecen al:", opciones: ["Nivel I.", "Nivel II.", "Nivel III.", "Nivel IV."], correcta: 1 },
+    { pregunta: "Operaciones aerotransportadas, anfibias y de grandes fuerzas tácticas (compañía o mayor) son amenazas de:", opciones: ["Nivel I.", "Nivel II.", "Nivel III.", "Nivel Alfa."], correcta: 2 },
+    { pregunta: "Condición de FP que se aplica en todo momento debido a la existencia de una amenaza general en el mundo:", opciones: ["FPCON Alfa.", "FPCON Normal.", "FPCON Bravo.", "FPCON Delta."], correcta: 1 },
+    { pregunta: "Condición que se aplica ante una amenaza no específica de un ataque terrorista, que puede mantenerse indefinidamente:", opciones: ["FPCON Alfa.", "FPCON Bravo.", "FPCON Charlie.", "FPCON Delta."], correcta: 0 },
+    { pregunta: "Condición donde existe una amenaza mayor o predecible que probablemente afectará las misiones al implementarse de forma prolongada:", opciones: ["FPCON Alfa.", "FPCON Bravo.", "FPCON Charlie.", "FPCON Delta."], correcta: 1 },
+    { pregunta: "Condición que se aplica cuando ocurre un incidente terrorista o es probable un acto hostil contra instalaciones de la Fuerza Aérea:", opciones: ["FPCON Bravo.", "FPCON Charlie.", "FPCON Delta.", "FPCON Normal."], correcta: 1 },
+    { pregunta: "Condición aplicada de forma limitada solo cuando ocurre o se anticipa un ataque terrorista contra un área específica:", opciones: ["FPCON Normal.", "FPCON Bravo.", "FPCON Charlie.", "FPCON Delta."], correcta: 3 },
+    { pregunta: "La información analizada de todas las fuentes que proporciona evaluación de amenazas a las misiones se denomina:", opciones: ["FPI (Inteligencia de Protección de Fuerzas).", "OPSEC (Seguridad de Operaciones).", "CIS (Sistemas de Información).", "RM (Gestión de Riesgos)."], correcta: 0 },
+    { pregunta: "Los requerimientos que los Comandantes deben desarrollar para guiar el trabajo de FPI se denominan:", opciones: ["CARVER.", "CCIR.", "OPSEC.", "CIFP."], correcta: 1 },
+    { pregunta: "Es el empleo de capacidades para encontrar, fijar, rastrear y neutralizar amenazas enemigas creando un entorno permisivo:", opciones: ["FPI.", "CCIR.", "CIFP (Apoyo de contrainteligencia a la protección).", "BSZ."], correcta: 2 },
+    { pregunta: "Son actividades del CIFP para descubrir indicios y frustrar amenazas, EXCEPTO:", opciones: ["Vigilancia.", "Contravigilancia.", "Análisis e investigación.", "Administración de presupuestos."], correcta: 3 },
+    { pregunta: "POVS, ROEs, instrucciones particulares y procedimientos de mensajería pertenecen a las medidas:", opciones: ["Materiales.", "Procedimentales.", "De infraestructuras.", "De información."], correcta: 1 },
+    { pregunta: "Chalecos de protección balística, estados de alerta, vacunaciones y contraseñas de personal son medidas:", opciones: ["De ámbito personal.", "Materiales.", "Procedimentales.", "De infraestructuras."], correcta: 0 },
+    { pregunta: "Dispositivos de identificación biométrica, barreras, refugios NBC y defensas contra sistemas no tripulados son medidas:", opciones: ["Procedimentales.", "Personales.", "Materiales.", "De Información."], correcta: 2 },
+    { pregunta: "Fortificaciones, bunkers, distancias de seguridad y control de suministros de agua y luz pertenecen a las medidas:", opciones: ["Personales.", "De infraestructuras.", "De información.", "Materiales."], correcta: 1 },
+    { pregunta: "Medidas SIGINT, ciberdefensa, protección electrónica, OPSEC y medidas de decepción son medidas de:", opciones: ["Información.", "Infraestructuras.", "Procedimentales.", "Personales."], correcta: 0 },
+    { pregunta: "Es el límite físico y lógico de la base, que funge como la última línea de defensa contra un enemigo:", opciones: ["Zona de seguridad de la base (BSZ).", "Límite de la base.", "Perímetro de la base.", "Área de operaciones (AOR)."], correcta: 2 },
+    { pregunta: "Es una línea que delimita la superficie para facilitar la coordinación, basándose en factores METT-TC:", opciones: ["Perímetro de la base.", "Límite de la base.", "Zona de seguridad de la base.", "Área Conjunta."], correcta: 1 },
+    { pregunta: "Espacio multidimensional alrededor de la base desde el cual el enemigo podría impactar las operaciones aéreas:", opciones: ["Perímetro de la base.", "Límite de la base.", "Zona de Seguridad de la Base (BSZ).", "Zona neutral."], correcta: 2 },
+    { pregunta: "Elemento del proceso RM que identifica la importancia relativa de los activos (valor monetario, insustituibilidad):", opciones: ["Evaluación de la vulnerabilidad.", "Evaluación de riesgos.", "Priorización mediante evaluación de la criticidad.", "Evaluación de amenazas."], correcta: 2 },
+    { pregunta: "Elemento del RM que revisa factores de existencia, capacidad e intención del enemigo usando inteligencia:", opciones: ["Evaluación de la vulnerabilidad.", "Evaluación de amenazas.", "Evaluación de la criticidad.", "Supervisión."], correcta: 1 },
+    { pregunta: "Elemento del RM que identifica las áreas en las que los recursos son susceptibles a acciones que disminuyan su eficacia:", opciones: ["Evaluación de riesgos.", "Evaluación de amenazas.", "Priorización de activos.", "Evaluación de vulnerabilidad."], correcta: 3 },
+    { pregunta: "Elemento del RM que compara el impacto de la pérdida de un activo con la probabilidad de un evento:", opciones: ["Evaluación de riesgos.", "Evaluación de amenazas.", "Evaluación de vulnerabilidad.", "Supervisión."], correcta: 0 },
+    { pregunta: "Último paso del RM que garantiza que los controles sigan siendo efectivos a través del tiempo:", opciones: ["Evaluación de riesgos.", "Supervisar y revisar.", "Identificación de peligros.", "Evaluación de criticidad."], correcta: 1 },
+    { pregunta: "Etapa 1 del Proceso de FP que determina la naturaleza de la tarea y confirma los resultados a alcanzar:", opciones: ["Análisis de la misión.", "Evaluación de vulnerabilidades.", "Gestión de riesgos.", "Respuesta al incidente."], correcta: 0 },
+    { pregunta: "Etapa 2 del Proceso FP que utiliza la herramienta CARVER para clasificar activos esenciales:", opciones: ["Evaluación de amenazas.", "Manejo de riesgos.", "Evaluación de criticidad.", "Gestión de consecuencias."], correcta: 2 },
+    { pregunta: "Etapa 3 del Proceso FP que identifica peligros en un momento y lugar geográfico (realizado por el J2/A2):", opciones: ["Análisis de la misión.", "Evaluación de riesgos.", "Evaluación de amenazas.", "Restablecer condiciones."], correcta: 2 },
+    { pregunta: "En la Evaluación de Riesgos (Etapa 5), la 'posibilidad de que ocurra un evento' se define como:", opciones: ["Gravedad.", "Probabilidad.", "Criticidad.", "Vulnerabilidad."], correcta: 1 },
+    { pregunta: "En la Evaluación de Riesgos (Etapa 5), el 'impacto en el éxito de la misión' (lesiones, daños) se define como:", opciones: ["Gravedad.", "Probabilidad.", "Amenaza.", "Riesgo residual."], correcta: 0 },
+    { pregunta: "Etapa 6 del Proceso FP donde el Comandante equilibra el riesgo para la fuerza frente al éxito de la misión:", opciones: ["Análisis de misión.", "Evaluación de riesgos.", "Gestión / Manejo de Riesgos.", "Respuesta al incidente."], correcta: 2 },
+    { pregunta: "Etapa 7 del Proceso FP que requiere coordinación entre bomberos, médicos, seguridad, etc., tras materializarse el peligro:", opciones: ["Manejo de Riesgos.", "Respuesta al Incidente.", "Evaluación de criticidad.", "Análisis de misión."], correcta: 1 },
+    { pregunta: "Etapa 8 del Proceso FP destinada a restaurar la capacidad operativa esencial tras un ataque:", opciones: ["Evaluación de amenazas.", "Gestión de Consecuencias y Recuperación.", "Respuesta al Incidente.", "Restablecer condiciones."], correcta: 1 },
+    { pregunta: "Etapa 9 (última) del Proceso FP que implica la recuperación total de funciones operativas y reinicio del ciclo:", opciones: ["Restablecer las condiciones para el éxito de la misión.", "Gestión de Consecuencias.", "Evaluación de vulnerabilidad.", "Manejo de riesgos."], correcta: 0 },
+    { pregunta: "Herramienta cuantitativa y cualitativa para evaluar la criticidad de los puntos y áreas vitales:", opciones: ["CARVER.", "OPSEC.", "METT-TC.", "JFAC."], correcta: 0 },
+    { pregunta: "Suceso eventual del que resulta daño involuntario para las personas o material (Glosario):", opciones: ["Incidente.", "Accidente.", "Riesgo.", "Vulnerabilidad."], correcta: 1 },
+    { pregunta: "Suceso provocado deliberadamente por una persona, propia o ajena, durante una operación (Glosario):", opciones: ["Accidente.", "Incidente.", "Peligro.", "Contingencia."], correcta: 1 },
+    { pregunta: "Aguas que requieren mayor precisión de navegación, constituyendo pasos obligados (Glosario):", opciones: ["Aguas restringidas.", "Aguas abiertas.", "Perímetro marítimo.", "Límites de base naval."], correcta: 0 },
+    { pregunta: "Amenaza que emplea simultáneamente medios convencionales, terrorismo, crimen organizado y cibernético (Glosario):", opciones: ["Convencional.", "Irregular.", "Amenaza Híbrida.", "Delictiva."], correcta: 2 },
+    { pregunta: "Restricciones o limitaciones nacionales sobre el empleo de las fuerzas en operaciones (Glosario):", opciones: ["OPSEC.", "Caveat.", "ROE.", "POV."], correcta: 1 },
+    { pregunta: "Medidas y cometidos para evitar o prevenir un ataque enemigo anulando amenazas existentes (Glosario):", opciones: ["Medidas Pasivas.", "Medidas Activas.", "Medidas de Recuperación.", "Medidas Materiales."], correcta: 1 },
+    { pregunta: "Medidas para minimizar los efectos de las amenazas y aumentar la supervivencia (Glosario):", opciones: ["Medidas Activas.", "Medidas Pasivas.", "Medidas de Recuperación.", "Medidas Procedimentales."], correcta: 1 },
+    { pregunta: "Medidas que, tras un ataque, permiten que las operaciones continúen en el menor tiempo (Glosario):", opciones: ["Medidas Activas.", "Medidas Pasivas.", "Medidas de Recuperación.", "Medidas Preventivas."], correcta: 2 },
+    { pregunta: "Creación de un entorno de trabajo seguro (Glosario):", opciones: ["Protección sanitaria.", "Protección funcional.", "Seguridad de la información.", "OPSEC."], correcta: 1 },
+    { pregunta: "Medidas para conservar la salud física y mental, y mitigar enfermedades no de combate (Glosario):", opciones: ["Protección funcional.", "Seguridad personal.", "Protección sanitaria.", "Defensa NBC."], correcta: 2 },
+    { pregunta: "Medidas que protegen la confidencialidad, integridad, disponibilidad y trazabilidad (Glosario):", opciones: ["OPSEC.", "Seguridad de la Información.", "Seguridad de la Organización.", "Seguridad Física."], correcta: 1 },
+    { pregunta: "Medidas dirigidas a prevenir situaciones en contra del buen nombre de la Institución (Glosario):", opciones: ["Seguridad de las Operaciones.", "Seguridad en el Personal.", "Seguridad de la Organización.", "Protección Funcional."], correcta: 2 },
+    { pregunta: "Medidas para proteger los Elementos Esenciales de Información Propia (EEI) de filtraciones (Glosario):", opciones: ["Seguridad de las Operaciones (OPSEC).", "Seguridad de la Información.", "Seguridad en el Personal.", "Seguridad Física."], correcta: 0 },
+    { pregunta: "Comprobar el grado de fiabilidad, honradez y lealtad para un puesto determinado (Glosario):", opciones: ["Seguridad de la Organización.", "Seguridad Funcional.", "Seguridad en el Personal.", "OPSEC."], correcta: 2 },
+    { pregunta: "¿Qué significa la sigla AOR?", opciones: ["Amenaza Operacional Real.", "Área de Responsabilidad.", "Ataque Organizado Regular.", "Apoyo de Operaciones de Reconocimiento."], correcta: 1 },
+    { pregunta: "¿Qué significa la sigla BSZ?", opciones: ["Base Security Zone (Zona de Seguridad de la Base).", "Base System Zero.", "Border Security Zone.", "Basic Standard Zone."], correcta: 0 },
+    { pregunta: "¿Qué significa la sigla CBRNE?", opciones: ["Control Biológico Reactivo No Estándar.", "Armas Químicas, Biológicas, Radiológicas, Nucleares y de Alto Poder Explosivo.", "Comando Base para Recursos Naturales y Energía.", "Centro de Búsqueda y Rescate Nacional Estratégico."], correcta: 1 },
+    { pregunta: "¿Qué significa la sigla CIFP?", opciones: ["Centro de Inteligencia de la Fuerza Policial.", "Contrainteligencia a la Protección de la Fuerza.", "Comando de Infantería y Fuerza Paracaidista.", "Control Integrado de Fuerzas Protegidas."], correcta: 1 },
+    { pregunta: "¿Qué significa la sigla IED?", opciones: ["Identificación Electrónica de Drones.", "Artefactos Explosivos Improvisados.", "Inteligencia Estratégica Defensiva.", "Instalación de Entrenamiento para Defensa."], correcta: 1 },
+    { pregunta: "¿Qué significa la sigla VBIED?", opciones: ["Vehículo Blindado de Infantería en Defensa.", "Artefactos Explosivos Improvisados Transportados en Vehículos.", "Verificación Biométrica de Ingreso y Egreso Diario.", "Vanguardia de Base para Intervención en Desastres."], correcta: 1 },
+    { pregunta: "Según el Anexo C, para obtener orientación específica sobre cómo contrarrestar amenazas aéreas y de misiles, se debe consultar el manual:", opciones: ["DOFA 1-42 (Guerra Electrónica).", "DOFA 1-4 (Ciberespacio).", "DOFA 1-31 (Recuperación de Personal).", "DOFA 1-11 (Operaciones de Contención Aérea)."], correcta: 3 }
+  ];
+
+  let preguntasJuego = [];
+  const letras = ["A", "B", "C", "D"];
+
+  let indiceActual = 0;
+  let puntaje = 0;
+  let respondida = false;
+
+  const elProgreso = document.getElementById("progreso");
+  const elContador = document.getElementById("contador");
+  const elTextoPregunta = document.getElementById("textoPregunta");
+  const elOpciones = document.getElementById("opciones");
+  const elMensaje = document.getElementById("mensaje");
+  const btnSiguiente = document.getElementById("btnSiguiente");
+  const vistaPregunta = document.getElementById("vistaPregunta");
+  const vistaFinal = document.getElementById("vistaFinal");
+  const btnReiniciar = document.getElementById("btnReiniciar");
+
+  // Función para mezclar arreglos (Algoritmo Fisher-Yates)
+  function mezclarArreglo(array) {
+    for (let i = array.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [array[i], array[j]] = [array[j], array[i]];
+    }
+  }
+
+  function inicializarJuego() {
+    // Clonamos profundamente el banco maestro para no mutar el original
+    preguntasJuego = JSON.parse(JSON.stringify(preguntasMaestras));
+
+    // Preparamos las opciones para mantener el rastro de cuál es la correcta
+    preguntasJuego.forEach(q => {
+      // Convertimos el string de opciones en un objeto {texto, esCorrecta}
+      q.opcionesObj = q.opciones.map((opTexto, idx) => ({
+        texto: opTexto,
+        esCorrecta: idx === q.correcta
+      }));
+      
+      // Mezclamos las opciones internas de esta pregunta
+      mezclarArreglo(q.opcionesObj);
+    });
+
+    // Mezclamos el orden general de las 100 preguntas
+    mezclarArreglo(preguntasJuego);
+
+    indiceActual = 0;
+    puntaje = 0;
+    
+    // Mostramos la primera
+    mostrarPregunta();
+  }
+
+  function pintarProgreso(){
+    elProgreso.innerHTML = "";
+    preguntasJuego.forEach((_, i) => {
+      const p = document.createElement("div");
+      p.className = "punto";
+      if(i < indiceActual) p.classList.add("hecho");
+      if(i === indiceActual) p.classList.add("activo");
+      elProgreso.appendChild(p);
+    });
+  }
+
+  function mostrarPregunta(){
+    respondida = false;
+    const q = preguntasJuego[indiceActual];
+
+    pintarProgreso();
+    elContador.textContent = `Pregunta ${indiceActual + 1} de ${preguntasJuego.length}`;
+    elTextoPregunta.textContent = q.pregunta;
+    elMensaje.textContent = "";
+    elMensaje.className = "mensaje";
+    btnSiguiente.classList.remove("mostrar");
+
+    elOpciones.innerHTML = "";
+    q.opcionesObj.forEach((opcion, i) => {
+      const div = document.createElement("div");
+      div.className = "opcion";
+      div.innerHTML = `<span class="letra">${letras[i]}</span><span>${opcion.texto}</span>`;
+      div.addEventListener("click", () => seleccionar(div, opcion.esCorrecta));
+      elOpciones.appendChild(div);
+    });
+  }
+
+  function seleccionar(elemento, esCorrecta){
+    if(respondida) return;
+    respondida = true;
+
+    const q = preguntasJuego[indiceActual];
+    const todasLasOpciones = document.querySelectorAll(".opcion");
+    
+    // Bloquear todas las opciones tras responder
+    todasLasOpciones.forEach(op => op.classList.add("bloqueada"));
+
+    if(esCorrecta){
+      elemento.classList.add("correcta");
+      elMensaje.textContent = "¡Correcto!";
+      elMensaje.classList.add("ok");
+      puntaje++;
+    } else {
+      elemento.classList.add("incorrecta");
+      elMensaje.textContent = "Ups, respuesta incorrecta.";
+      elMensaje.classList.add("no");
+      
+      // Resaltar automáticamente la respuesta que sí era correcta
+      q.opcionesObj.forEach((op, idx) => {
+        if(op.esCorrecta) {
+          todasLasOpciones[idx].classList.add("correcta");
+        }
+      });
+    }
+
+    elemento.classList.add("seleccionada");
+    btnSiguiente.classList.add("mostrar");
+    btnSiguiente.textContent = (indiceActual === preguntasJuego.length - 1) ? "Ver resultado" : "Siguiente";
+  }
+
+  function siguientePregunta(){
+    indiceActual++;
+    if(indiceActual < preguntasJuego.length){
+      mostrarPregunta();
+    } else {
+      mostrarFinal();
+    }
+  }
+
+  function mostrarFinal(){
+    vistaPregunta.style.display = "none";
+    vistaFinal.classList.add("mostrar");
+
+    document.getElementById("puntajeFinal").textContent = `${puntaje}/${preguntasJuego.length}`;
+
+    const porcentaje = puntaje / preguntasJuego.length;
+    let titulo, mensaje;
+    if(porcentaje >= 0.9){
+      titulo = "¡Excepcional!"; mensaje = "Tienes un dominio excelente de la Doctrina DOP 11-26.";
+    } else if(porcentaje >= 0.6){
+      titulo = "¡Muy bien hecho!"; mensaje = "Vas por buen camino, sigue repasando para perfeccionar.";
+    } else {
+      titulo = "¡A seguir practicando!"; mensaje = "Revisa los conceptos que fallaron y vuelve a intentarlo.";
+    }
+    document.getElementById("tituloFinal").textContent = titulo;
+    document.getElementById("mensajeFinal").textContent = mensaje;
+  }
+
+  function reiniciar(){
+    vistaFinal.classList.remove("mostrar");
+    vistaPregunta.style.display = "block";
+    // Al reiniciar, volvemos a generar la aleatoriedad total
+    inicializarJuego(); 
+  }
+
+  btnSiguiente.addEventListener("click", siguientePregunta);
+  btnReiniciar.addEventListener("click", reiniciar);
+
+  // Iniciar la primera vez que carga la página
+  inicializarJuego();
+</script>
+
+</body>
+</html>
