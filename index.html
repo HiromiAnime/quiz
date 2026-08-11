@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Quiz de Práctica DOP 11-26</title>
+<title>Quiz DOP 11-26 (250 Preguntas)</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
@@ -76,23 +76,24 @@
     opacity:0.6;
   }
 
+  /* Se redujo el tamaño del punto para que entren los 250 */
   .progreso{
     display:flex;
     justify-content:center;
     flex-wrap: wrap; 
-    gap:4px;
+    gap: 3px;
     margin-bottom: 22px;
     position:relative;
   }
   .progreso .punto{
-    width:8px; height:8px;
+    width: 6px; height: 6px;
     border-radius:50%;
     background: var(--rosa-suave);
     transition: all .3s ease;
   }
   .progreso .punto.activo{
     background: var(--rosa-fuerte);
-    transform: scale(1.3);
+    transform: scale(1.4);
   }
   .progreso .punto.hecho{
     background: var(--morado-uva);
@@ -222,7 +223,6 @@
   .btn-siguiente:hover{ filter: brightness(1.06); transform: translateY(-2px); }
   .btn-siguiente:active{ transform: translateY(0); }
 
-  /* pantalla final */
   .final{
     text-align:center;
     display:none;
@@ -268,7 +268,6 @@
   <div class="marca">Quiz <span>DOP 11-26</span></div>
 
   <div class="tarjeta">
-    <!-- vista de pregunta -->
     <div id="vistaPregunta">
       <div class="progreso" id="progreso"></div>
       <div class="contador" id="contador"></div>
@@ -280,7 +279,6 @@
       </div>
     </div>
 
-    <!-- vista final -->
     <div class="final" id="vistaFinal">
       <h2 id="tituloFinal">¡Cuestionario completado!</h2>
       <p>Tu puntaje fue:</p>
@@ -293,7 +291,7 @@
 
 <script>
   // Banco Maestro de 250 Preguntas
-  preguntasMaestras = [
+  const rawData = [
     {p:"Proporcionar los principios fundamentales que unifiquen y orienten el pensamiento, lenguaje y acción relativa al planeamiento, organización, ejecución y comando y control de las acciones para la protección de la fuerza, se refiere a:",o:["Finalidad","Objeto","Alcance","Definición"],c:1},
     {p:"Puede ser empleada por todo el personal en servicio de la Fuerza Aérea; su contenido es autoritativo pero no restrictivo, se refiere a:",o:["Objeto","Finalidad","Alcance","Definición"],c:2},
     {p:"Establecer la Doctrina Operacional de la Protección de la Fuerza, se refiere a:",o:["Finalidad","Alcance","Definición","Objeto"],c:3},
@@ -548,53 +546,21 @@
 
   let preguntasJuego = [];
   const letras = ["A", "B", "C", "D"];
+  let indiceActual = 0, puntaje = 0, respondida = false;
 
-  let indiceActual = 0;
-  let puntaje = 0;
-  let respondida = false;
+  const elProgreso = document.getElementById("progreso"), elContador = document.getElementById("contador"), elTextoPregunta = document.getElementById("textoPregunta"), elOpciones = document.getElementById("opciones"), elMensaje = document.getElementById("mensaje"), btnSiguiente = document.getElementById("btnSiguiente"), vistaPregunta = document.getElementById("vistaPregunta"), vistaFinal = document.getElementById("vistaFinal");
 
-  const elProgreso = document.getElementById("progreso");
-  const elContador = document.getElementById("contador");
-  const elTextoPregunta = document.getElementById("textoPregunta");
-  const elOpciones = document.getElementById("opciones");
-  const elMensaje = document.getElementById("mensaje");
-  const btnSiguiente = document.getElementById("btnSiguiente");
-  const vistaPregunta = document.getElementById("vistaPregunta");
-  const vistaFinal = document.getElementById("vistaFinal");
-  const btnReiniciar = document.getElementById("btnReiniciar");
+  function mezclar(array) { for (let i = array.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [array[i], array[j]] = [array[j], array[i]]; } }
 
-  // Función para mezclar arreglos (Algoritmo Fisher-Yates)
-  function mezclarArreglo(array) {
-    for (let i = array.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [array[i], array[j]] = [array[j], array[i]];
-    }
-  }
-
-  function inicializarJuego() {
-    // Clonamos profundamente el banco maestro para no mutar el original
-    preguntasJuego = JSON.parse(JSON.stringify(preguntasMaestras));
-
-    // Preparamos las opciones para mantener el rastro de cuál es la correcta
+  function inicializar() {
+    preguntasJuego = JSON.parse(JSON.stringify(rawData));
     preguntasJuego.forEach(q => {
-      // Convertimos el string de opciones en un objeto {texto, esCorrecta}
-      q.opcionesObj = q.opciones.map((opTexto, idx) => ({
-        texto: opTexto,
-        esCorrecta: idx === q.correcta
-      }));
-      
-      // Mezclamos las opciones internas de esta pregunta
-      mezclarArreglo(q.opcionesObj);
+      // Se utiliza directamente el arreglo "o" y el índice correcto "c"
+      q.op = q.o.map((txt, idx) => ({ t: txt, c: idx === q.c }));
+      mezclar(q.op);
     });
-
-    // Mezclamos el orden general de las 100 preguntas
-    mezclarArreglo(preguntasJuego);
-
-    indiceActual = 0;
-    puntaje = 0;
-    
-    // Mostramos la primera
-    mostrarPregunta();
+    mezclar(preguntasJuego);
+    indiceActual = 0; puntaje = 0; mostrarPregunta();
   }
 
   function pintarProgreso(){
@@ -609,100 +575,62 @@
   }
 
   function mostrarPregunta(){
-    respondida = false;
+    respondida = false; 
     const q = preguntasJuego[indiceActual];
-
     pintarProgreso();
     elContador.textContent = `Pregunta ${indiceActual + 1} de ${preguntasJuego.length}`;
-    elTextoPregunta.textContent = q.pregunta;
-    elMensaje.textContent = "";
-    elMensaje.className = "mensaje";
+    
+    // Se utiliza q.p, que es donde está guardada la pregunta en rawData
+    elTextoPregunta.textContent = q.p; 
+    
+    elMensaje.textContent = ""; elMensaje.className = "mensaje";
     btnSiguiente.classList.remove("mostrar");
-
     elOpciones.innerHTML = "";
-    q.opcionesObj.forEach((opcion, i) => {
+    
+    q.op.forEach((opcion, i) => {
       const div = document.createElement("div");
       div.className = "opcion";
-      div.innerHTML = `<span class="letra">${letras[i]}</span><span>${opcion.texto}</span>`;
-      div.addEventListener("click", () => seleccionar(div, opcion.esCorrecta));
+      div.innerHTML = `<span class="letra">${letras[i]}</span><span>${opcion.t}</span>`;
+      div.addEventListener("click", () => seleccionar(div, opcion.c));
       elOpciones.appendChild(div);
     });
   }
 
   function seleccionar(elemento, esCorrecta){
-    if(respondida) return;
-    respondida = true;
-
+    if(respondida) return; respondida = true;
     const q = preguntasJuego[indiceActual];
-    const todasLasOpciones = document.querySelectorAll(".opcion");
-    
-    // Bloquear todas las opciones tras responder
-    todasLasOpciones.forEach(op => op.classList.add("bloqueada"));
-
+    const todas = document.querySelectorAll(".opcion");
+    todas.forEach(op => op.classList.add("bloqueada"));
     if(esCorrecta){
-      elemento.classList.add("correcta");
-      elMensaje.textContent = "¡Correcto!";
-      elMensaje.classList.add("ok");
-      puntaje++;
+      elemento.classList.add("correcta"); elMensaje.textContent = "¡Correcto!"; elMensaje.classList.add("ok"); puntaje++;
     } else {
-      elemento.classList.add("incorrecta");
-      elMensaje.textContent = "Ups, respuesta incorrecta.";
-      elMensaje.classList.add("no");
-      
-      // Resaltar automáticamente la respuesta que sí era correcta
-      q.opcionesObj.forEach((op, idx) => {
-        if(op.esCorrecta) {
-          todasLasOpciones[idx].classList.add("correcta");
-        }
-      });
+      elemento.classList.add("incorrecta"); elMensaje.textContent = "Ups, respuesta incorrecta."; elMensaje.classList.add("no");
+      q.op.forEach((op, idx) => { if(op.c) todas[idx].classList.add("correcta"); });
     }
-
     elemento.classList.add("seleccionada");
     btnSiguiente.classList.add("mostrar");
     btnSiguiente.textContent = (indiceActual === preguntasJuego.length - 1) ? "Ver resultado" : "Siguiente";
   }
 
-  function siguientePregunta(){
+  btnSiguiente.addEventListener("click", () => {
     indiceActual++;
-    if(indiceActual < preguntasJuego.length){
-      mostrarPregunta();
-    } else {
-      mostrarFinal();
+    if(indiceActual < preguntasJuego.length) mostrarPregunta();
+    else {
+      vistaPregunta.style.display = "none"; vistaFinal.classList.add("mostrar");
+      document.getElementById("puntajeFinal").textContent = `${puntaje}/${preguntasJuego.length}`;
+      let p = puntaje / preguntasJuego.length, t, m;
+      if(p >= 0.9){ t = "¡Excepcional!"; m = "Tienes un dominio excelente del manual."; }
+      else if(p >= 0.6){ t = "¡Muy bien hecho!"; m = "Vas por buen camino, sigue repasando."; }
+      else { t = "¡A seguir practicando!"; m = "Revisa los conceptos e inténtalo de nuevo."; }
+      document.getElementById("tituloFinal").textContent = t; document.getElementById("mensajeFinal").textContent = m;
     }
-  }
+  });
 
-  function mostrarFinal(){
-    vistaPregunta.style.display = "none";
-    vistaFinal.classList.add("mostrar");
+  document.getElementById("btnReiniciar").addEventListener("click", () => {
+    vistaFinal.classList.remove("mostrar"); vistaPregunta.style.display = "block"; inicializar();
+  });
 
-    document.getElementById("puntajeFinal").textContent = `${puntaje}/${preguntasJuego.length}`;
-
-    const porcentaje = puntaje / preguntasJuego.length;
-    let titulo, mensaje;
-    if(porcentaje >= 0.9){
-      titulo = "¡Excepcional!"; mensaje = "Tienes un dominio excelente de la Doctrina DOP 11-26.";
-    } else if(porcentaje >= 0.6){
-      titulo = "¡Muy bien hecho!"; mensaje = "Vas por buen camino, sigue repasando para perfeccionar.";
-    } else {
-      titulo = "¡A seguir practicando!"; mensaje = "Revisa los conceptos que fallaron y vuelve a intentarlo.";
-    }
-    document.getElementById("tituloFinal").textContent = titulo;
-    document.getElementById("mensajeFinal").textContent = mensaje;
-  }
-
-  function reiniciar(){
-    vistaFinal.classList.remove("mostrar");
-    vistaPregunta.style.display = "block";
-    // Al reiniciar, volvemos a generar la aleatoriedad total
-    inicializarJuego(); 
-  }
-
-  btnSiguiente.addEventListener("click", siguientePregunta);
-  btnReiniciar.addEventListener("click", reiniciar);
-
-  // Iniciar la primera vez que carga la página
-  inicializarJuego();
+  inicializar();
 </script>
-
 </body>
 </html>
